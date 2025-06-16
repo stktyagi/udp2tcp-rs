@@ -6,6 +6,8 @@ use tokio::io::AsyncWriteExt;
 async fn TcpSpawn(buf:&[u8],mut tcp_stream:&mut TcpStream) -> Result<(), Box<dyn Error>>{
     tcp_stream.write_all(&buf).await?;
     println!("spawned tcp");
+    let mut buf = [0; 10];
+    let len = tcp_stream.peek(&mut buf).await?;
     Ok(())
 }
 
@@ -27,10 +29,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let tcpsocket = TcpSocket::new_v4()?;
     tcpsocket.bind(tcpaddr)?;
     let listener = tcpsocket.listen(1024)?;
-    let (mut tcp_stream, client_addr) = listener.accept().await?;
+    //let (mut tcp_stream, client_addr) = listener.accept().await?;
 
     let mut buf = [0; 1024];
     loop {
+        let (mut tcp_stream, client_addr) = listener.accept().await?;
         let (len, addr) = sock.recv_from(&mut buf).await?;
         println!("received {} bytes from {}", len, addr);
         TcpSpawn(&buf[..len],&mut tcp_stream).await?;
